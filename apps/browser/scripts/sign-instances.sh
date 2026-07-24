@@ -104,12 +104,14 @@ for instance in "${INSTANCES[@]}"; do
   NAME="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['name'])" "$SOURCE_DIR/manifest.json")"
   echo "==> Signing $instance ($NAME)"
 
-  npx --yes web-ext sign \
+  # Passed through the environment rather than as flags, which would expose the
+  # secret in the process list.
+  WEB_EXT_API_KEY="$AMO_JWT_ISSUER" \
+    WEB_EXT_API_SECRET="$AMO_JWT_SECRET" \
+    npx --yes web-ext sign \
     --source-dir "$SOURCE_DIR" \
     --artifacts-dir "$ARTIFACTS_DIR" \
-    --channel unlisted \
-    --api-key "$AMO_JWT_ISSUER" \
-    --api-secret "$AMO_JWT_SECRET"
+    --channel unlisted
 done
 
 echo
