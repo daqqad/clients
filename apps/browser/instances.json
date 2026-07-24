@@ -1,0 +1,20 @@
+{
+  "work": {
+    "id": "work",
+    "name": "Bitwarden Work",
+    "shortName": "BW Work",
+    "geckoId": "bitwarden-work@containers.local",
+    "hue": 18,
+    "dotColor": "#F97316",
+    "allowedContainers": []
+  },
+  "personal": {
+    "id": "personal",
+    "name": "Bitwarden Personal",
+    "shortName": "BW Personal",
+    "geckoId": "bitwarden-personal@containers.local",
+    "hue": 75,
+    "dotColor": "#22C55E",
+    "allowedContainers": []
+  }
+}

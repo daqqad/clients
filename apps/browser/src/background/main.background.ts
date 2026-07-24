@@ -380,6 +380,7 @@ import { DefaultBadgeBrowserApi } from "../platform/badge/badge-browser-api";
 import { BadgeService } from "../platform/badge/badge.service";
 import { BrowserApi } from "../platform/browser/browser-api";
 import BrowserPopupUtils from "../platform/browser/browser-popup-utils";
+import { containerGate } from "../platform/container/container-gate.service";
 import { flagEnabled } from "../platform/flags";
 import { IpcBackgroundService } from "../platform/ipc/ipc-background.service";
 import { IpcContentScriptManagerService } from "../platform/ipc/ipc-content-script-manager.service";
@@ -1903,6 +1904,14 @@ export default class MainBackground {
     }
 
     const tab = await BrowserApi.getTabFromCurrentWindow();
+
+    // An instance build contributes context menu entries only for the
+    // containers it owns, so the menus of sibling builds don't stack up.
+    if (tab && !(await containerGate.allowsTab(tab))) {
+      await MainContextMenuHandler.removeAll();
+      this.onUpdatedRan = this.onReplacedRan = false;
+      return;
+    }
 
     if (tab) {
       const currentUrlIsBlocked = await firstValueFrom(

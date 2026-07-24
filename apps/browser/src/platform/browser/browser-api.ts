@@ -270,6 +270,35 @@ export class BrowserApi {
     });
   }
 
+  /**
+   * The cookie store a tab belongs to, which is how Firefox identifies
+   * containers. Returns null on browsers that have no such concept — the
+   * property is absent from the Chrome tab type, hence the cast.
+   */
+  static getTabCookieStoreId(tab: chrome.tabs.Tab): string | null {
+    return (tab as unknown as browser.tabs.Tab)?.cookieStoreId ?? null;
+  }
+
+  /**
+   * Resolves the display name of a Firefox container (contextual identity) from
+   * a tab's cookie store id. Returns null on browsers without containers, or
+   * when the cookie store has no contextual identity (the default container).
+   */
+  static async getContainerName(cookieStoreId: string): Promise<string | null> {
+    if (!cookieStoreId || typeof browser === "undefined" || !browser.contextualIdentities) {
+      return null;
+    }
+
+    try {
+      const identity = await browser.contextualIdentities.get(cookieStoreId);
+      return identity?.name ?? null;
+    } catch {
+      // Thrown for cookie stores without a contextual identity, e.g. the
+      // default container and private windows.
+      return null;
+    }
+  }
+
   static async getActiveTabs(): Promise<chrome.tabs.Tab[]> {
     return await BrowserApi.tabsQuery({
       active: true,

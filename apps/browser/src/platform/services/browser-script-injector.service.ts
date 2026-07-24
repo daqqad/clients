@@ -8,6 +8,7 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 
 import { BrowserApi } from "../browser/browser-api";
+import { containerGate } from "../container/container-gate.service";
 
 import {
   CommonScriptInjectionDetails,
@@ -40,6 +41,13 @@ export class BrowserScriptInjectorService extends ScriptInjectorService {
     }
 
     const tab = tabId && (await BrowserApi.getTab(tabId));
+
+    // Instance builds only act on the containers they own. Refusing injection
+    // here keeps a foreign container free of this build's autofill scripts,
+    // inline menu and notification bar.
+    if (!(await containerGate.allowsTab(tab))) {
+      return;
+    }
 
     // Check if the tab URL is on the disabled URLs list
     let injectionAllowedInTab = true;

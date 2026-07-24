@@ -29,7 +29,12 @@ npm-debug.log
 # Build directories
 dist
 build
+build-*/
+web-ext-artifacts
 target
+
+# Container allow lists for instance builds are private to each checkout
+apps/browser/instances.local.json
 .angular/cache
 .flatpak
 .flatpak-repo

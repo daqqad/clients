@@ -14,9 +14,41 @@ module.exports.getEnv = function getEnv(params) {
   const ENV = params.env || (process.env.ENV = process.env.NODE_ENV);
   const manifestVersion = process.env.MANIFEST_VERSION == 3 ? 3 : 2;
   const browser = process.env.BROWSER ?? "chrome";
+  const instance = loadInstance(process.env.BW_INSTANCE);
 
-  return { ENV, manifestVersion, browser };
+  return { ENV, manifestVersion, browser, instance };
 };
+
+/**
+ * Resolve BW_INSTANCE against instances.json for side-by-side builds. Returns
+ * null for a stock build.
+ *
+ * instances.local.json, when present, is merged over instances.json per
+ * instance. Container names tend to be private, so the allow lists live there
+ * and stay out of version control.
+ */
+function loadInstance(name) {
+  if (name == null || name === "") {
+    return null;
+  }
+
+  const instances = require("./instances.json");
+  let overrides = {};
+  try {
+    overrides = require("./instances.local.json");
+  } catch {
+    // No local overrides; instances.json is used as-is.
+  }
+
+  const instance = instances[name];
+  if (instance == null) {
+    throw new Error(
+      `Unknown BW_INSTANCE "${name}". Known instances: ${Object.keys(instances).join(", ")}`,
+    );
+  }
+
+  return { ...instance, ...overrides[name] };
+}
 
 const DEFAULT_PARAMS = {
   outputPath: path.resolve(__dirname, "build"),
@@ -47,9 +79,12 @@ module.exports.buildConfig = function buildConfig(params) {
     process.env.NODE_ENV = "development";
   }
 
-  const { ENV, manifestVersion, browser } = module.exports.getEnv(params);
+  const { ENV, manifestVersion, browser, instance } = module.exports.getEnv(params);
 
   console.log(`Building Manifest Version ${manifestVersion} app - ${params.configName} version`);
+  if (instance != null) {
+    console.log(`Instance build: ${instance.name} (${instance.geckoId})`);
+  }
 
   const envConfig = configurator.load(ENV, process.env.CHANNEL);
   configurator.log(envConfig);
@@ -138,6 +173,9 @@ module.exports.buildConfig = function buildConfig(params) {
         BW_INCLUDE_CONTENT_SCRIPT_MEASUREMENTS: JSON.stringify(
           process.env.BW_INCLUDE_CONTENT_SCRIPT_MEASUREMENTS === "true",
         ),
+        // Double-encoded so the inlined value stays a string and callers parse it.
+        BW_INSTANCE_ID: JSON.stringify(instance?.id ?? ""),
+        BW_INSTANCE_CONTAINERS: JSON.stringify(JSON.stringify(instance?.allowedContainers ?? [])),
       },
     }),
     new webpack.EnvironmentPlugin({
@@ -187,11 +225,24 @@ module.exports.buildConfig = function buildConfig(params) {
               ? path.resolve(__dirname, "src/manifest.v3.json")
               : path.resolve(__dirname, "src/manifest.json"),
           to: "manifest.json",
-          transform: manifest.transform(browser),
+          transform: manifest.transform(browser, instance),
         },
         { from: path.resolve(__dirname, "src/managed_schema.json"), to: "managed_schema.json" },
         { from: path.resolve(__dirname, "src/_locales"), to: "_locales" },
         { from: path.resolve(__dirname, "src/images"), to: "images" },
+        // Instance icons overwrite the stock ones. The badge sets toolbar icons
+        // from hardcoded /images paths at runtime, so replacing the files is the
+        // only way to keep instances visually distinct.
+        ...(instance == null
+          ? []
+          : [
+              {
+                from: path.resolve(__dirname, `src/images-instance/${instance.id}`),
+                to: "images",
+                force: true,
+                priority: 10,
+              },
+            ]),
         { from: path.resolve(__dirname, "src/popup/images"), to: "popup/images" },
         { from: path.resolve(__dirname, "src/autofill/content/autofill.css"), to: "content" },
       ],

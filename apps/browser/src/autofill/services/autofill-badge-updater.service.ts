@@ -9,6 +9,7 @@ import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.servi
 import { Tab } from "../../platform/badge/badge-browser-api";
 import { BadgeService } from "../../platform/badge/badge.service";
 import { BadgeStatePriority } from "../../platform/badge/priority";
+import { containerGate } from "../../platform/container/container-gate.service";
 
 const StateName = "autofill-badge-updater";
 
@@ -52,6 +53,11 @@ export class AutofillBadgeUpdaterService {
   private async calculateCountText(tab: Tab, userId: UserId) {
     if (!tab.tabId) {
       this.logService.warning("Tab event received but tab id is undefined");
+      return;
+    }
+
+    // Don't advertise a match count for containers this build doesn't own.
+    if (!(await containerGate.allowsTabId(tab.tabId))) {
       return;
     }
 

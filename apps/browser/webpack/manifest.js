@@ -20,14 +20,55 @@
  *
  * for Chrome.
  */
-function transform(browser) {
+function transform(browser, instance) {
   return (buffer) => {
     let manifest = JSON.parse(buffer.toString());
 
     manifest = transformPrefixes(manifest, browser);
+    manifest = applyInstance(manifest, instance, browser);
 
     return JSON.stringify(manifest, null, 2);
   };
+}
+
+/**
+ * Give a side-by-side instance build its own add-on identity.
+ *
+ * A distinct gecko id makes Firefox treat the build as a separate add-on, so it
+ * gets its own storage and background context and can stay logged into a
+ * different account than its siblings. Keyboard shortcuts are dropped because
+ * only one add-on can hold a given accelerator.
+ */
+function applyInstance(manifest, instance, browser) {
+  if (instance == null) {
+    return manifest;
+  }
+
+  // Resolving a tab's container to a name needs contextualIdentities, which only
+  // exists on Firefox. Added here so stock builds keep their permission set.
+  if (browser === "firefox" && instance.allowedContainers?.length > 0) {
+    manifest.permissions = [...manifest.permissions, "contextualIdentities"];
+  }
+
+  manifest.name = instance.name;
+  manifest.short_name = instance.shortName ?? instance.name;
+
+  if (manifest.browser_action != null) {
+    manifest.browser_action.default_title = instance.name;
+  }
+  if (manifest.action != null) {
+    manifest.action.default_title = instance.name;
+  }
+  if (manifest.sidebar_action != null) {
+    manifest.sidebar_action.default_title = instance.name;
+  }
+  if (manifest.browser_specific_settings?.gecko != null) {
+    manifest.browser_specific_settings.gecko.id = instance.geckoId;
+  }
+
+  delete manifest.commands;
+
+  return manifest;
 }
 
 const browsers = ["chrome", "edge", "firefox", "opera", "safari"];
