@@ -280,6 +280,23 @@ export class BrowserApi {
   }
 
   /**
+   * Every Firefox container (contextual identity) as {cookieStoreId, name}.
+   * Empty on browsers without containers.
+   */
+  static async getContainers(): Promise<{ cookieStoreId: string; name: string }[]> {
+    if (typeof browser === "undefined" || !browser.contextualIdentities) {
+      return [];
+    }
+
+    try {
+      const identities = await browser.contextualIdentities.query({});
+      return identities.map((i) => ({ cookieStoreId: i.cookieStoreId, name: i.name }));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
    * Resolves the display name of a Firefox container (contextual identity) from
    * a tab's cookie store id. Returns null on browsers without containers, or
    * when the cookie store has no contextual identity (the default container).

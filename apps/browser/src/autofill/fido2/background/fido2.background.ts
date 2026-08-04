@@ -15,6 +15,7 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
 
 import { BrowserApi } from "../../../platform/browser/browser-api";
+import { containerGate } from "../../../platform/container/container-gate.service";
 import { ScriptInjectorService } from "../../../platform/services/abstractions/script-injector.service";
 import { AbortManager } from "../../../vault/background/abort-manager";
 import { Fido2ContentScript, Fido2ContentScriptId } from "../enums/fido2-content-script.enum";
@@ -209,12 +210,25 @@ export class Fido2Background implements Fido2BackgroundInterface {
       return;
     }
 
+    // These scripts override navigator.credentials for the whole page. With
+    // several instance builds installed, every one of them would override it and
+    // answer the site's request, so the registration is limited to the cookie
+    // stores this build owns. Without this the passkey prompt appears more than
+    // once and the sites see conflicting answers.
+    const cookieStoreId = await containerGate.ownedCookieStoreIds();
+    if (cookieStoreId?.length === 0) {
+      await this.registeredContentScripts?.unregister();
+      this.registeredContentScripts = undefined;
+      return;
+    }
+
     this.registeredContentScripts = await BrowserApi.registerContentScriptsMv2({
       js: [
         { file: await this.getFido2PageScriptAppendFileName() },
         { file: Fido2ContentScript.ContentScript },
       ],
       ...this.sharedRegistrationOptions,
+      ...(cookieStoreId ? { cookieStoreId } : {}),
     });
   }
 

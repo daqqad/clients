@@ -53,6 +53,14 @@ function applyInstance(manifest, instance, browser) {
   manifest.name = instance.name;
   manifest.short_name = instance.shortName ?? instance.name;
 
+  // AMO refuses a version it has already signed, and upstream's version is
+  // reused across rebuilds, so instance builds carry a fourth component that is
+  // bumped per upload. Firefox treats 2026.7.0.2 as newer than 2026.7.0.1, so
+  // installing the new xpi upgrades in place and keeps the vault session.
+  if (instance.build != null) {
+    manifest.version = `${manifest.version}.${instance.build}`;
+  }
+
   if (manifest.browser_action != null) {
     manifest.browser_action.default_title = instance.name;
   }

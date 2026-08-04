@@ -176,6 +176,9 @@ module.exports.buildConfig = function buildConfig(params) {
         // Double-encoded so the inlined value stays a string and callers parse it.
         BW_INSTANCE_ID: JSON.stringify(instance?.id ?? ""),
         BW_INSTANCE_CONTAINERS: JSON.stringify(JSON.stringify(instance?.allowedContainers ?? [])),
+        // Colors the in-page shield (notification bar, inline menu) so the
+        // instance asking to save a password is identifiable.
+        BW_INSTANCE_LOGO: JSON.stringify(instance?.logoColor ?? instance?.dotColor ?? ""),
       },
     }),
     new webpack.EnvironmentPlugin({

@@ -1,5 +1,12 @@
 import { Theme } from "@bitwarden/common/platform/enums";
 
+/**
+ * Instance builds stamp their own logo color at build time so page-injected UI
+ * (notification bar, inline menu) is identifiable. Empty for stock builds,
+ * which keep Bitwarden's palette.
+ */
+const instanceBrandLogo = process.env.BW_INSTANCE_LOGO || "";
+
 const lightTheme = {
   transparent: {
     hover: `rgb(0 0 0 / 0.02)`,
@@ -56,7 +63,7 @@ const lightTheme = {
     alt3: `rgba(26, 65, 172)`,
     alt4: `rgba(2, 15, 102)`,
   },
-  brandLogo: `rgba(23, 93, 220)`,
+  brandLogo: instanceBrandLogo || `rgba(23, 93, 220)`,
 };
 
 const darkTheme = {
@@ -115,7 +122,7 @@ const darkTheme = {
     alt3: `rgba(48, 57, 70)`,
     alt4: `rgba(18, 26, 39)`,
   },
-  brandLogo: `rgba(255, 255, 255)`,
+  brandLogo: instanceBrandLogo || `rgba(255, 255, 255)`,
 };
 
 export const themes = {

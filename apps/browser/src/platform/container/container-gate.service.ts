@@ -72,6 +72,33 @@ export class ContainerGateService {
 
     return this.allowedContainers.includes(name.toLowerCase());
   }
+
+  /**
+   * Cookie store ids this build owns, for APIs that accept a cookieStoreId
+   * filter (notably contentScripts.register). Returns null when the gate is
+   * inactive, meaning "register everywhere" - an empty array would mean the
+   * opposite, so callers must distinguish the two.
+   *
+   * Resolved at call time. A container created after registration is not
+   * covered until the registration is refreshed.
+   */
+  async ownedCookieStoreIds(): Promise<string[] | null> {
+    if (!this.active) {
+      return null;
+    }
+
+    const owned = (await BrowserApi.getContainers())
+      .filter((container) => this.allowedContainers.includes(container.name.toLowerCase()))
+      .map((container) => container.cookieStoreId);
+
+    // The default container has no contextual identity, so it never appears in
+    // the query above and has to be added by its well-known id.
+    if (this.allowedContainers.includes(DEFAULT_CONTAINER_NAME)) {
+      owned.push("firefox-default");
+    }
+
+    return owned;
+  }
 }
 
 /**

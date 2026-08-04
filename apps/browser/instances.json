@@ -6,7 +6,9 @@
     "geckoId": "bitwarden-work@containers.local",
     "hue": 18,
     "dotColor": "#F97316",
-    "allowedContainers": []
+    "allowedContainers": [],
+    "build": 1,
+    "logoColor": "#F97316"
   },
   "personal": {
     "id": "personal",
@@ -15,6 +17,8 @@
     "geckoId": "bitwarden-personal@containers.local",
     "hue": 75,
     "dotColor": "#22C55E",
-    "allowedContainers": []
+    "allowedContainers": [],
+    "build": 1,
+    "logoColor": "#22C55E"
   }
 }
