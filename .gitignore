@@ -67,3 +67,8 @@ apps/**/config/local.json
 # DevContainer generated files
 .devcontainer/native-gui/docker-compose.override.yml
 .devcontainer/common/.env
+
+# instance publishing artifacts (URLs are unlisted)
+apps/browser/r2-prefix.local
+apps/browser/uploads.local
+apps/browser/updates.json

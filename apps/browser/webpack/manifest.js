@@ -72,6 +72,13 @@ function applyInstance(manifest, instance, browser) {
   }
   if (manifest.browser_specific_settings?.gecko != null) {
     manifest.browser_specific_settings.gecko.id = instance.geckoId;
+
+    // Self-distributed builds get no updates from AMO. Firefox polls this
+    // manifest roughly daily and installs whatever version it advertises. Kept
+    // in instances.local.json because the URL is unlisted.
+    if (instance.updateUrl) {
+      manifest.browser_specific_settings.gecko.update_url = instance.updateUrl;
+    }
   }
 
   delete manifest.commands;

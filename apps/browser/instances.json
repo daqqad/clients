@@ -7,7 +7,7 @@
     "hue": 18,
     "dotColor": "#F97316",
     "allowedContainers": [],
-    "build": 1,
+    "build": 2,
     "logoColor": "#F97316"
   },
   "personal": {
@@ -18,7 +18,7 @@
     "hue": 75,
     "dotColor": "#22C55E",
     "allowedContainers": [],
-    "build": 1,
+    "build": 2,
     "logoColor": "#22C55E"
   }
 }
